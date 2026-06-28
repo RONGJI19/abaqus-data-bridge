@@ -261,11 +261,10 @@ Unified progress bar interface with optional `tqdm` support.
 
 The GUI is a PySide6 front end over the same parser, matcher, and exporter pipeline used by the CLI.
 
-**Workflow**:
-1. **Files**: select or drag-drop `.inp` / `.dat`, with automatic output directory generation.
-2. **Selection**: choose variable presets, Step filters, NSET/ELSET filters, and Increment mode.
-3. **Preview**: run pre-analysis to inspect model metadata, Steps/Increments, NSETs, ELSETs, and simple two-node element connectivity.
-4. **Output & Run**: configure CSV/TSV, encoding, decimal places, metadata, node coordinates, merged output, progress, and logs.
+**Layout**:
+- The main window uses a single-screen horizontal splitter instead of multi-tab navigation.
+- Left panel: file selection, automatic output directory generation, pre-analysis entry point, variable presets, Step filters, NSET/ELSET filters, and Increment mode.
+- Right panel: pre-analysis results, output controls, run controls, progress, and logs.
 
 **Threading model**:
 - `PreAnalysisThread` parses INP/DAT in the background and returns a lightweight `PreAnalysisData` snapshot.

@@ -133,7 +133,7 @@
 | `abaqus_python_batch` | 批量处理模式 + 结构化的 CSV 输出函数 | 参考其 CSV 写入模式和函数签名 |
 | `SPADE` | CLI 接口 (`spade extract`) + 模块化设计 | 采用 CLI (click/argparse) + 插件式提取器 |
 | `abqpy` | 类型提示 + 良好的包结构 | 使用 Python dataclasses 定义数据结构 |
-| ODB/后处理工具常见工作流 | 先选择 Step/Frame/Region，再导出结果 | GUI 采用“文件 → 选择 → 预览 → 输出与运行”的 4 步工作流，并在预分析中勾选 Step/NSET/ELSET |
+| ODB/后处理工具常见工作流 | 先选择 Step/Frame/Region，再导出结果 | GUI 采用单屏左右分栏：左侧输入与筛选，右侧预览、输出和运行，并在预分析中勾选 Step/NSET/ELSET |
 
 ---
 
@@ -215,11 +215,12 @@ ADB (Abaqus Data Bridge)
 │   └── 进度条与日志
 │
 ├── 4.7 GUI 桌面界面
-│   ├── 文件页：拖放/选择 INP、DAT，自动生成输出目录
-│   ├── 选择页：变量预设、Step/NSET/ELSET/Increment 筛选
-│   ├── 预览页：预分析模型，勾选 Step、节点集、单元集并应用到筛选
-│   ├── 输出页：CSV/TSV、编码、小数位、元数据、坐标列、合并输出
-│   └── 运行反馈：后台线程、进度条、日志、打开输出目录
+│   ├── 单屏左右分栏：左侧输入与筛选，右侧预览、输出和运行
+│   ├── 左侧：拖放/选择 INP、DAT，自动生成输出目录
+│   ├── 左侧：变量预设、Step/NSET/ELSET/Increment 筛选
+│   ├── 右侧：预分析模型，勾选 Step、节点集、单元集并应用到筛选
+│   ├── 右侧：CSV/TSV、编码、小数位、元数据、坐标列、合并输出
+│   └── 右侧：后台线程、进度条、日志、打开输出目录
 │
 ├── 4.8 独立 EXE 打包
 │   ├── ADB_GUI.exe：窗口版，面向工程师直接操作

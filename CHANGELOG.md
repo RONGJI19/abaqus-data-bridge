@@ -5,7 +5,9 @@ All notable changes to Abaqus Data Bridge (ADB) are documented in this file.
 ## [Unreleased] — 2026-06-28
 
 ### 🔧 GUI Workflow Improvements
-- Reworked the desktop GUI into a clearer 4-step workflow: Files, Selection, Preview, Output & Run.
+- Reworked the desktop GUI into a single-screen left/right split layout that uses wide displays more effectively.
+- Left side: file selection, pre-analysis entry point, variable presets, and filters.
+- Right side: pre-analysis results, output options, run controls, progress, and logs.
 - Added variable presets for nodal, element, contact, and spring result groups.
 - Added Step filtering to the GUI.
 - Enhanced pre-analysis so users can select Steps, NSETs, and ELSETs from parsed model data and apply them to extraction filters.

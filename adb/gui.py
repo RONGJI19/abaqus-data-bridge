@@ -405,18 +405,31 @@ class MainWindow:
         title_box.addWidget(subtitle)
         header_layout.addLayout(title_box)
         header_layout.addStretch()
-        self.header_hint = Q.QLabel("建议流程：选择文件 -> 预分析 -> 勾选范围 -> 开始提取")
+        self.header_hint = Q.QLabel("左侧设置输入与筛选，右侧预览、输出并运行")
         self.header_hint.setObjectName("hintLabel")
         header_layout.addWidget(self.header_hint)
         main_layout.addWidget(header)
 
-        self.tabs = Q.QTabWidget()
-        main_layout.addWidget(self.tabs, stretch=1)
+        content_splitter = Q.QSplitter(self.QtCore.Qt.Horizontal)
+        content_splitter.setChildrenCollapsible(False)
+        main_layout.addWidget(content_splitter, stretch=1)
 
-        # === Tab 1: files ===
-        files_tab = Q.QWidget()
-        files_layout = Q.QVBoxLayout(files_tab)
-        files_layout.setSpacing(10)
+        left_panel = Q.QWidget()
+        left_layout = Q.QVBoxLayout(left_panel)
+        left_layout.setContentsMargins(0, 0, 8, 0)
+        left_layout.setSpacing(10)
+
+        right_panel = Q.QWidget()
+        right_layout = Q.QVBoxLayout(right_panel)
+        right_layout.setContentsMargins(8, 0, 0, 0)
+        right_layout.setSpacing(10)
+
+        content_splitter.addWidget(left_panel)
+        content_splitter.addWidget(right_panel)
+        content_splitter.setStretchFactor(0, 5)
+        content_splitter.setStretchFactor(1, 7)
+
+        # === Left column: files and selection ===
 
         file_group = Q.QGroupBox("文件设置")
         file_layout = Q.QFormLayout(file_group)
@@ -461,7 +474,7 @@ class MainWindow:
         self.file_tip.setObjectName("tipLabel")
         file_layout.addRow("输出目录:", out_row)
         file_layout.addRow("", self.file_tip)
-        files_layout.addWidget(file_group)
+        left_layout.addWidget(file_group)
 
         quick_group = Q.QGroupBox("快速操作")
         quick_layout = Q.QHBoxLayout(quick_group)
@@ -469,31 +482,9 @@ class MainWindow:
         self.pre_btn.setMinimumHeight(38)
         self.pre_btn.setObjectName("secondaryButton")
         self.pre_btn.clicked.connect(self._start_pre_analysis)
-        self.run_btn = Q.QPushButton("开始提取")
-        self.run_btn.setMinimumHeight(38)
-        self.run_btn.setObjectName("primaryButton")
-        self.run_btn.clicked.connect(self._start_extraction)
-        self.cancel_btn = Q.QPushButton("取消")
-        self.cancel_btn.setMinimumHeight(38)
-        self.cancel_btn.setEnabled(False)
-        self.cancel_btn.clicked.connect(self._cancel_extraction)
-        self.open_out_btn = Q.QPushButton("打开输出目录")
-        self.open_out_btn.setMinimumHeight(38)
-        self.open_out_btn.setEnabled(False)
-        self.open_out_btn.clicked.connect(self._open_output_dir)
         quick_layout.addWidget(self.pre_btn)
-        quick_layout.addWidget(self.run_btn)
-        quick_layout.addWidget(self.cancel_btn)
         quick_layout.addStretch()
-        quick_layout.addWidget(self.open_out_btn)
-        files_layout.addWidget(quick_group)
-        files_layout.addStretch()
-        self.tabs.addTab(files_tab, "1 文件")
-
-        # === Tab 2: scope ===
-        scope_tab = Q.QWidget()
-        scope_layout = Q.QVBoxLayout(scope_tab)
-        scope_layout.setSpacing(10)
+        left_layout.addWidget(quick_group)
 
         var_group = Q.QGroupBox("提取变量")
         var_outer = Q.QVBoxLayout(var_group)
@@ -529,7 +520,7 @@ class MainWindow:
             var_layout.addWidget(cb, row, col)
         var_outer.addLayout(var_layout)
 
-        scope_layout.addWidget(var_group)
+        left_layout.addWidget(var_group)
 
         filt_group = Q.QGroupBox("筛选条件")
         filt_layout = Q.QFormLayout(filt_group)
@@ -565,13 +556,10 @@ class MainWindow:
         incr_layout.addStretch()
         filt_layout.addRow("Increment:", incr_layout)
 
-        scope_layout.addWidget(filt_group)
-        scope_layout.addStretch()
-        self.tabs.addTab(scope_tab, "2 选择")
+        left_layout.addWidget(filt_group)
+        left_layout.addStretch()
 
-        # === Tab 3: pre-analysis ===
-        preview_tab = Q.QWidget()
-        preview_layout = Q.QVBoxLayout(preview_tab)
+        # === Right column: preview, output, and run ===
         self.pre_group = Q.QGroupBox("预分析结果")
         self.pre_group.setVisible(False)
         pre_layout = Q.QVBoxLayout(self.pre_group)
@@ -605,13 +593,9 @@ class MainWindow:
         self.pre_empty_label = Q.QLabel("选择 INP/DAT 后点击“预分析”，这里会显示 Step、集合和简单单元连接信息。")
         self.pre_empty_label.setAlignment(self.QtCore.Qt.AlignCenter)
         self.pre_empty_label.setObjectName("emptyLabel")
-        preview_layout.addWidget(self.pre_empty_label, stretch=1)
-        preview_layout.addWidget(self.pre_group, stretch=1)
-        self.tabs.addTab(preview_tab, "3 预览")
+        right_layout.addWidget(self.pre_empty_label, stretch=1)
+        right_layout.addWidget(self.pre_group, stretch=4)
 
-        # === Tab 4: output and run ===
-        run_tab = Q.QWidget()
-        run_layout = Q.QVBoxLayout(run_tab)
         out_group = Q.QGroupBox("输出选项")
         out_layout = Q.QFormLayout(out_group)
         out_layout.setLabelAlignment(self.QtCore.Qt.AlignRight)
@@ -642,7 +626,27 @@ class MainWindow:
         opt_h_layout.addStretch()
         out_layout.addRow("", opt_h_layout)
 
-        run_layout.addWidget(out_group)
+        right_layout.addWidget(out_group)
+
+        run_btn_group = Q.QGroupBox("运行")
+        run_btn_layout = Q.QHBoxLayout(run_btn_group)
+        self.run_btn = Q.QPushButton("开始提取")
+        self.run_btn.setMinimumHeight(38)
+        self.run_btn.setObjectName("primaryButton")
+        self.run_btn.clicked.connect(self._start_extraction)
+        self.cancel_btn = Q.QPushButton("取消")
+        self.cancel_btn.setMinimumHeight(38)
+        self.cancel_btn.setEnabled(False)
+        self.cancel_btn.clicked.connect(self._cancel_extraction)
+        self.open_out_btn = Q.QPushButton("打开输出目录")
+        self.open_out_btn.setMinimumHeight(38)
+        self.open_out_btn.setEnabled(False)
+        self.open_out_btn.clicked.connect(self._open_output_dir)
+        run_btn_layout.addWidget(self.run_btn)
+        run_btn_layout.addWidget(self.cancel_btn)
+        run_btn_layout.addStretch()
+        run_btn_layout.addWidget(self.open_out_btn)
+        right_layout.addWidget(run_btn_group)
 
         log_group = Q.QGroupBox("运行状态")
         log_layout = Q.QVBoxLayout(log_group)
@@ -661,8 +665,7 @@ class MainWindow:
         self.log_text.setFont(self.QtGui.QFont("Consolas", 9))
         log_layout.addWidget(self.log_text)
 
-        run_layout.addWidget(log_group, stretch=1)
-        self.tabs.addTab(run_tab, "4 输出与运行")
+        right_layout.addWidget(log_group, stretch=3)
 
         self.window.setStyleSheet("""
             QWidget {
@@ -1147,7 +1150,6 @@ class MainWindow:
 
         self.pre_empty_label.setVisible(False)
         self.pre_group.setVisible(True)
-        self.tabs.setCurrentIndex(2)
         self._log(f"预分析完成: {data.node_count} nodes, {data.element_count} elements, "
                   f"{len(data.nsets)} nsets, {len(data.elsets)} elsets, {len(data.steps)} steps")
 
@@ -1180,7 +1182,6 @@ class MainWindow:
         self.steps_edit.setText(", ".join(checked_steps))
         self.nsets_edit.setText(", ".join(checked_nsets))
         self.elsets_edit.setText(", ".join(checked_elsets))
-        self.tabs.setCurrentIndex(1)
         self._log(
             f"已应用: {len(checked_steps)} Steps, "
             f"{len(checked_nsets)} NSETs, {len(checked_elsets)} ELSETs 到筛选条件"

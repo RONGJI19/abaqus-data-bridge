@@ -129,12 +129,10 @@ pip install abaqus-data-bridge[gui]
 adb-gui
 ```
 
-GUI 面向非脚本用户优化为 4 步流程：
+GUI 面向非脚本用户优化为单屏左右分栏，尽量利用宽屏空间：
 
-1. **文件**：拖放或选择 `.inp` / `.dat`，自动生成输出目录
-2. **选择**：一键选择节点/单元/接触/弹簧变量，填写 Step、NSET、ELSET、Increment
-3. **预览**：预分析模型，勾选 Step、节点集、单元集并一键应用到筛选条件
-4. **输出与运行**：选择 CSV/TSV、编码、小数位、是否合并输出，运行后可直接打开输出目录
+- **左侧**：文件选择、预分析入口、变量预设、Step/NSET/ELSET/Increment 筛选
+- **右侧**：预分析结果、输出选项、开始提取、进度日志、打开输出目录
 
 ![GUI](docs/gui_screenshot.png)
 
