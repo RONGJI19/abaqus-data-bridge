@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+*.whl
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# pytest
+.pytest_cache/
+htmlcov/
+.coverage
+*.cover
+
+# mypy
+.mypy_cache/
+
+# PyInstaller
+*.spec.lock
+
+# Build artifacts
+*.exe
+*.dll
+*.pyd
+
+# Debug logs
+*.debug.log
+
+# Codebase memory (local)
+.codebase-memory/
+
+# Claude config (local)
+.claude/

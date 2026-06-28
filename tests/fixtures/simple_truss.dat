@@ -1,0 +1,67 @@
+
+                                                          A B A Q U S
+
+               S T A N D A R D   V E R S I O N   6 . 2 4 - 1
+
+               D A T E :   2 5 - J U N - 2 0 2 6   T I M E :   1 2 : 3 0 : 0 0
+
+
+                             J O B   N A M E :   simple_truss
+
+
+P R O B L E M   S I Z E
+
+ NUMBER OF ELEMENTS                         7
+ NUMBER OF NODES                            5
+ NUMBER OF NODES DEFINED BY THE USER        5
+ TOTAL NUMBER OF VARIABLES IN THE MODEL     6
+
+END OF USER INPUT PROCESSING
+
+
+
+ S T E P   1    S T A T I C   A N A L Y S I S
+
+
+ INCREMENT     1  SUMMARY
+ TIME       1.0000E+00
+ STEP TIME  1.0000E+00
+
+
+N O D E   O U T P U T
+
+THE FOLLOWING TABLE IS PRINTED FOR NODES BELONGING TO NODE SET ALL_NODES
+
+NODE FOOT-   U1           U2           UR3          RF1          RF2
+     NOTE
+
+   1         0.0000E+00   0.0000E+00   0.0000E+00  -5.0000E+02  -2.8868E+02
+   2        -1.2345E-03  -2.4689E-03   0.0000E+00   0.0000E+00   0.0000E+00
+   3        -2.0000E-04  -8.6603E-04   0.0000E+00   0.0000E+00   0.0000E+00
+   4        -2.4691E-03   0.0000E+00   0.0000E+00  -5.0000E+02   2.8868E+02
+   5        -1.8000E-04  -1.5590E-03   0.0000E+00   0.0000E+00   0.0000E+00
+
+
+E L E M E N T   O U T P U T
+
+THE FOLLOWING TABLE IS PRINTED FOR ELEMENTS BELONGING TO ELEMENT SET ALL_ELEMENTS
+
+ELEMENT  FOOT-  S11           E11
+        NOTE
+   1            5.0000E+02   2.3810E-03
+   2           -5.7735E+02  -2.7493E-03
+   3           -2.8868E+02  -1.3746E-03
+   4            5.0000E+02   2.3810E-03
+   5           -5.7735E+02  -2.7493E-03
+   6            5.7735E+02   2.7493E-03
+   7           -5.0000E+02  -2.3810E-03
+
+
+ THE ANALYSIS HAS BEEN COMPLETED
+
+
+JOB TIME SUMMARY
+ USER TIME (SEC)      =   0.15000
+ SYSTEM TIME (SEC)    =   0.02000
+ TOTAL CPU TIME (SEC) =   0.17000
+ WALLCLOCK TIME (SEC) =   1

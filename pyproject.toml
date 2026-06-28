@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=64.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "abaqus-data-bridge"
+version = "0.1.0"
+description = "Abaqus Data Bridge — 从 Abaqus .inp/.dat 文件中一键提取有限元结果到 CSV"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "ADB Contributors"}
+]
+keywords = ["abaqus", "fea", "finite-element", "post-processing", "csv", "dat", "inp"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Manufacturing",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+xlsx = ["openpyxl>=3.0"]
+tqdm = ["tqdm>=4.60"]
+chardet = ["chardet>=4.0"]
+gui = ["pyside6>=6.5"]
+all = ["openpyxl>=3.0", "tqdm>=4.60", "chardet>=4.0", "pyside6>=6.5"]
+dev = ["pytest>=7.0", "pytest-cov>=4.0"]
+
+[project.scripts]
+adb = "adb.cli:main"
+adb-gui = "adb.gui:main"
+
+[project.urls]
+Homepage = "https://github.com/furon/abaqus-data-bridge"
+Documentation = "https://github.com/furon/abaqus-data-bridge/wiki"
+Repository = "https://github.com/furon/abaqus-data-bridge"
+Issues = "https://github.com/furon/abaqus-data-bridge/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["adb", "adb.*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = ["-v", "--tb=short"]

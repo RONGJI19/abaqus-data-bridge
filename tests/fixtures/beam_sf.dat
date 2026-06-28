@@ -1,0 +1,63 @@
+
+                                                          A B A Q U S
+
+               S T A N D A R D   V E R S I O N   6 . 2 4 - 1
+
+               D A T E :   2 5 - J U N - 2 0 2 6   T I M E :   1 4 : 0 0 : 0 0
+
+
+                             J O B   N A M E :   beam_sf
+
+
+P R O B L E M   S I Z E
+
+ NUMBER OF ELEMENTS                         2
+ NUMBER OF NODES                            6
+ NUMBER OF NODES DEFINED BY THE USER        6
+ TOTAL NUMBER OF VARIABLES IN THE MODEL    36
+
+END OF USER INPUT PROCESSING
+
+
+
+ S T E P   1    S T A T I C   A N A L Y S I S
+
+
+ INCREMENT     1  SUMMARY
+ TIME       1.0000E+00
+ STEP TIME  1.0000E+00
+
+
+N O D E   O U T P U T
+
+THE FOLLOWING TABLE IS PRINTED FOR NODES BELONGING TO NODE SET ALL_NODES
+
+NODE FOOT-   U1           U2           U3
+     NOTE
+
+   1         0.0000E+00   0.0000E+00   0.0000E+00
+   2         0.0000E+00  -2.3810E-01   0.0000E+00
+   3         0.0000E+00  -1.9048E+00   0.0000E+00
+   4         0.0000E+00   0.0000E+00   0.0000E+00
+   5         0.0000E+00  -2.3810E-01   0.0000E+00
+   6         0.0000E+00  -1.9048E+00   0.0000E+00
+
+
+E L E M E N T   O U T P U T
+
+THE FOLLOWING TABLE IS PRINTED FOR ELEMENTS BELONGING TO ELEMENT SET BEAM_ELEMENTS
+
+ELEMENT  FOOT-  S11           SF1           SF2           SF3           SM1           SM2
+        NOTE
+   1            0.0000E+00   0.0000E+00  -5.0000E+02   0.0000E+00   0.0000E+00   5.0000E+04
+   2            0.0000E+00   0.0000E+00  -5.0000E+02   0.0000E+00   0.0000E+00   0.0000E+00
+
+
+ THE ANALYSIS HAS BEEN COMPLETED
+
+
+JOB TIME SUMMARY
+ USER TIME (SEC)      =   0.12000
+ SYSTEM TIME (SEC)    =   0.01000
+ TOTAL CPU TIME (SEC) =   0.13000
+ WALLCLOCK TIME (SEC) =   1
