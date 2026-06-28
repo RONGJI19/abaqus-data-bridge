@@ -12,7 +12,7 @@ Thank you for your interest in contributing to ADB! This document outlines the p
 
 ### 🐛 Reporting Bugs
 
-1. Search [existing issues](https://github.com/furon/abaqus-data-bridge/issues) first
+1. Search [existing issues](https://github.com/RONGJI19/abaqus-data-bridge/issues) first
 2. Include:
    - ADB version (`adb --version`)
    - Python version (`python --version`)
@@ -125,7 +125,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full architecture and module guid
 
 ## Questions?
 
-- Open a [GitHub Discussion](https://github.com/furon/abaqus-data-bridge/discussions)
+- Open a [GitHub Discussion](https://github.com/RONGJI19/abaqus-data-bridge/discussions)
 - Check the [User Guide (中文)](docs/user_guide_zh.md)
 - Read the [Requirements Specification](REQUIREMENTS_SPECIFICATION.md)
 
