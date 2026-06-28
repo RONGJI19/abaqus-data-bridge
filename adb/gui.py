@@ -365,11 +365,13 @@ class MainWindow:
         self.Qt = QtWidgets
         self.QtCore = QtCore
         self.QtGui = QtGui
-        self._build_ui()
         self._thread: ExtractionThread | None = None
         self._pre_thread: PreAnalysisThread | None = None
         self._nset_checkboxes: dict = {}
         self._elset_checkboxes: dict = {}
+        self._step_checkboxes: dict = {}
+        self._last_output_dir: str = ""
+        self._build_ui()
 
     def show(self):
         """显示窗口."""
@@ -380,49 +382,73 @@ class MainWindow:
         w = Q.QWidget()
         self.window = w
         w.setWindowTitle(f"Abaqus Data Bridge v{__version__}")
-        w.resize(960, 700)
+        w.resize(1120, 760)
 
-        # --- 主布局 ---
+        # --- Main layout ---
         main_layout = Q.QVBoxLayout(w)
-        main_layout.setContentsMargins(12, 12, 12, 12)
-        main_layout.setSpacing(8)
+        main_layout.setContentsMargins(14, 14, 14, 14)
+        main_layout.setSpacing(10)
 
-        # 创建可拖放的输入框类
         DropLineEdit = _create_drop_lineedit(Q)
 
-        # === 标题 ===
-        title = Q.QLabel(f"<h2>🔗 Abaqus Data Bridge v{__version__}</h2>")
-        title.setAlignment(self.QtCore.Qt.AlignCenter)
-        main_layout.addWidget(title)
+        # === Header ===
+        header = Q.QFrame()
+        header.setObjectName("header")
+        header_layout = Q.QHBoxLayout(header)
+        header_layout.setContentsMargins(16, 12, 16, 12)
+        title_box = Q.QVBoxLayout()
+        title = Q.QLabel(f"Abaqus Data Bridge v{__version__}")
+        title.setObjectName("titleLabel")
+        subtitle = Q.QLabel("INP + DAT 结果提取到 CSV/TSV，无需 Abaqus 许可证")
+        subtitle.setObjectName("subtitleLabel")
+        title_box.addWidget(title)
+        title_box.addWidget(subtitle)
+        header_layout.addLayout(title_box)
+        header_layout.addStretch()
+        self.header_hint = Q.QLabel("建议流程：选择文件 -> 预分析 -> 勾选范围 -> 开始提取")
+        self.header_hint.setObjectName("hintLabel")
+        header_layout.addWidget(self.header_hint)
+        main_layout.addWidget(header)
 
-        # === 文件选择区 ===
-        file_group = Q.QGroupBox("📁 文件设置 (支持拖放 .inp / .dat)")
+        self.tabs = Q.QTabWidget()
+        main_layout.addWidget(self.tabs, stretch=1)
+
+        # === Tab 1: files ===
+        files_tab = Q.QWidget()
+        files_layout = Q.QVBoxLayout(files_tab)
+        files_layout.setSpacing(10)
+
+        file_group = Q.QGroupBox("文件设置")
         file_layout = Q.QFormLayout(file_group)
+        file_layout.setLabelAlignment(self.QtCore.Qt.AlignRight)
+        file_layout.setFieldGrowthPolicy(Q.QFormLayout.ExpandingFieldsGrow)
 
         self.inp_edit = DropLineEdit(['.inp'])
-        self.inp_edit.setPlaceholderText("拖放或选择 .inp 文件...")
-        inp_btn = Q.QPushButton("浏览...")
+        self.inp_edit.setPlaceholderText("拖放或选择 Abaqus .inp 输入文件")
+        self.inp_edit.setClearButtonEnabled(True)
+        inp_btn = Q.QPushButton("选择 INP")
         inp_btn.clicked.connect(lambda: self._browse_file("INP (*.inp)", self.inp_edit))
         inp_row = Q.QHBoxLayout()
         inp_row.addWidget(self.inp_edit)
         inp_row.addWidget(inp_btn)
 
         self.dat_edit = DropLineEdit(['.dat'])
-        self.dat_edit.setPlaceholderText("拖放或选择 .dat 文件...")
-        dat_btn = Q.QPushButton("浏览...")
+        self.dat_edit.setPlaceholderText("拖放或选择 Abaqus .dat 结果文件")
+        self.dat_edit.setClearButtonEnabled(True)
+        dat_btn = Q.QPushButton("选择 DAT")
         dat_btn.clicked.connect(lambda: self._browse_file("DAT (*.dat)", self.dat_edit))
         dat_row = Q.QHBoxLayout()
         dat_row.addWidget(self.dat_edit)
         dat_row.addWidget(dat_btn)
 
-        # 输出目录 — INP 改变时自动设为 INP 所在目录
+        # Output directory: auto-filled from INP stem unless user changes it.
         self._out_manually_set = False
         self._auto_setting_out = False
         self.out_edit = Q.QLineEdit()
-        self.out_edit.setText("./output")
+        self.out_edit.setPlaceholderText("默认自动使用 <INP文件名>_adb_output")
         self.inp_edit.textChanged.connect(self._on_inp_changed)
         self.out_edit.textChanged.connect(self._on_out_changed)
-        out_btn = Q.QPushButton("浏览...")
+        out_btn = Q.QPushButton("选择目录")
         out_btn.clicked.connect(lambda: self._browse_dir(self.out_edit))
         out_row = Q.QHBoxLayout()
         out_row.addWidget(self.out_edit)
@@ -430,36 +456,99 @@ class MainWindow:
 
         file_layout.addRow("INP 文件:", inp_row)
         file_layout.addRow("DAT 文件:", dat_row)
+        self.file_tip = Q.QLabel("可以直接把 .inp 和 .dat 文件拖到输入框。输出目录留空时会自动生成。")
+        self.file_tip.setWordWrap(True)
+        self.file_tip.setObjectName("tipLabel")
         file_layout.addRow("输出目录:", out_row)
-        main_layout.addWidget(file_group)
+        file_layout.addRow("", self.file_tip)
+        files_layout.addWidget(file_group)
 
-        # === 变量选择区 ===
-        var_group = Q.QGroupBox("📊 提取变量 (不选=全部)")
-        var_layout = Q.QGridLayout(var_group)
-        var_layout.setSpacing(4)
+        quick_group = Q.QGroupBox("快速操作")
+        quick_layout = Q.QHBoxLayout(quick_group)
+        self.pre_btn = Q.QPushButton("预分析")
+        self.pre_btn.setMinimumHeight(38)
+        self.pre_btn.setObjectName("secondaryButton")
+        self.pre_btn.clicked.connect(self._start_pre_analysis)
+        self.run_btn = Q.QPushButton("开始提取")
+        self.run_btn.setMinimumHeight(38)
+        self.run_btn.setObjectName("primaryButton")
+        self.run_btn.clicked.connect(self._start_extraction)
+        self.cancel_btn = Q.QPushButton("取消")
+        self.cancel_btn.setMinimumHeight(38)
+        self.cancel_btn.setEnabled(False)
+        self.cancel_btn.clicked.connect(self._cancel_extraction)
+        self.open_out_btn = Q.QPushButton("打开输出目录")
+        self.open_out_btn.setMinimumHeight(38)
+        self.open_out_btn.setEnabled(False)
+        self.open_out_btn.clicked.connect(self._open_output_dir)
+        quick_layout.addWidget(self.pre_btn)
+        quick_layout.addWidget(self.run_btn)
+        quick_layout.addWidget(self.cancel_btn)
+        quick_layout.addStretch()
+        quick_layout.addWidget(self.open_out_btn)
+        files_layout.addWidget(quick_group)
+        files_layout.addStretch()
+        self.tabs.addTab(files_tab, "1 文件")
+
+        # === Tab 2: scope ===
+        scope_tab = Q.QWidget()
+        scope_layout = Q.QVBoxLayout(scope_tab)
+        scope_layout.setSpacing(10)
+
+        var_group = Q.QGroupBox("提取变量")
+        var_outer = Q.QVBoxLayout(var_group)
+        var_hint = Q.QLabel("不勾选任何变量时提取全部可识别结果。常用组合可以一键选择。")
+        var_hint.setObjectName("tipLabel")
+        var_outer.addWidget(var_hint)
+        preset_row = Q.QHBoxLayout()
+        nodal_btn = Q.QPushButton("节点结果")
+        nodal_btn.clicked.connect(lambda: self._apply_variable_preset({"U", "RF"}))
+        elem_btn = Q.QPushButton("单元结果")
+        elem_btn.clicked.connect(lambda: self._apply_variable_preset({"S", "E", "SF", "SM"}))
+        contact_btn = Q.QPushButton("接触结果")
+        contact_btn.clicked.connect(lambda: self._apply_variable_preset({"CNORMF", "CPRESS", "COPEN", "CSLIP"}))
+        spring_btn = Q.QPushButton("弹簧结果")
+        spring_btn.clicked.connect(lambda: self._apply_variable_preset({"S11", "E11"}))
+        clear_var_btn = Q.QPushButton("清空")
+        clear_var_btn.clicked.connect(lambda: self._apply_variable_preset(set()))
+        for btn in (nodal_btn, elem_btn, contact_btn, spring_btn, clear_var_btn):
+            preset_row.addWidget(btn)
+        preset_row.addStretch()
+        var_outer.addLayout(preset_row)
+        var_layout = Q.QGridLayout()
+        var_layout.setSpacing(6)
 
         self.var_checkboxes = {}
         for i, (label, (cat, vars_list)) in enumerate(VARIABLE_GROUPS.items()):
             cb = Q.QCheckBox(label)
             cb.setChecked(False)
+            cb.setProperty("vars", vars_list)
             self.var_checkboxes[label] = (cb, cat, vars_list)
             row = i // 4
             col = i % 4
             var_layout.addWidget(cb, row, col)
+        var_outer.addLayout(var_layout)
 
-        main_layout.addWidget(var_group)
+        scope_layout.addWidget(var_group)
 
-        # === 筛选区 ===
-        filt_group = Q.QGroupBox("🔍 筛选条件")
+        filt_group = Q.QGroupBox("筛选条件")
         filt_layout = Q.QFormLayout(filt_group)
+        filt_layout.setLabelAlignment(self.QtCore.Qt.AlignRight)
 
         self.nsets_edit = Q.QLineEdit()
-        self.nsets_edit.setPlaceholderText("如: TOP,BOTTOM (逗号分隔，留空=全部)")
+        self.nsets_edit.setClearButtonEnabled(True)
+        self.nsets_edit.setPlaceholderText("如 TOP,BOTTOM，留空表示全部节点集")
         filt_layout.addRow("节点集:", self.nsets_edit)
 
         self.elsets_edit = Q.QLineEdit()
-        self.elsets_edit.setPlaceholderText("如: SPRING_SET (逗号分隔，留空=全部)")
+        self.elsets_edit.setClearButtonEnabled(True)
+        self.elsets_edit.setPlaceholderText("如 SPRING_SET，留空表示全部单元集")
         filt_layout.addRow("单元集:", self.elsets_edit)
+
+        self.steps_edit = Q.QLineEdit()
+        self.steps_edit.setClearButtonEnabled(True)
+        self.steps_edit.setPlaceholderText("如 Step-1,Step-3，留空表示全部 Step")
+        filt_layout.addRow("Step:", self.steps_edit)
 
         incr_layout = Q.QHBoxLayout()
         self.incr_combo = Q.QComboBox()
@@ -476,19 +565,22 @@ class MainWindow:
         incr_layout.addStretch()
         filt_layout.addRow("Increment:", incr_layout)
 
-        main_layout.addWidget(filt_group)
+        scope_layout.addWidget(filt_group)
+        scope_layout.addStretch()
+        self.tabs.addTab(scope_tab, "2 选择")
 
-        # === 预分析结果区 (初始隐藏) ===
-        self.pre_group = Q.QGroupBox("📋 预分析结果")
+        # === Tab 3: pre-analysis ===
+        preview_tab = Q.QWidget()
+        preview_layout = Q.QVBoxLayout(preview_tab)
+        self.pre_group = Q.QGroupBox("预分析结果")
         self.pre_group.setVisible(False)
         pre_layout = Q.QVBoxLayout(self.pre_group)
 
-        # 摘要行
         self.pre_summary_label = Q.QLabel("")
         self.pre_summary_label.setWordWrap(True)
+        self.pre_summary_label.setObjectName("summaryLabel")
         pre_layout.addWidget(self.pre_summary_label)
 
-        # 滚动区域
         pre_scroll = Q.QScrollArea()
         pre_scroll.setWidgetResizable(True)
         pre_scroll_widget = Q.QWidget()
@@ -496,18 +588,13 @@ class MainWindow:
         pre_scroll.setWidget(pre_scroll_widget)
         pre_layout.addWidget(pre_scroll)
 
-        # Select/Deselect + Apply 按钮
         pre_btn_row = Q.QHBoxLayout()
-        self.pre_select_all_btn = Q.QPushButton("全选")
+        self.pre_select_all_btn = Q.QPushButton("全选集合")
         self.pre_select_all_btn.clicked.connect(lambda: self._toggle_all_sets(True))
-        self.pre_deselect_all_btn = Q.QPushButton("全不选")
+        self.pre_deselect_all_btn = Q.QPushButton("清空集合")
         self.pre_deselect_all_btn.clicked.connect(lambda: self._toggle_all_sets(False))
-        self.pre_apply_btn = Q.QPushButton("✅ 应用选中集合到筛选")
-        self.pre_apply_btn.setStyleSheet(
-            "QPushButton { background-color: #2196F3; color: white; font-weight: bold; "
-            "border-radius: 4px; padding: 6px; }"
-            "QPushButton:hover { background-color: #1976D2; }"
-        )
+        self.pre_apply_btn = Q.QPushButton("应用选中范围")
+        self.pre_apply_btn.setObjectName("secondaryButton")
         self.pre_apply_btn.clicked.connect(self._apply_sets_to_filters)
         pre_btn_row.addWidget(self.pre_select_all_btn)
         pre_btn_row.addWidget(self.pre_deselect_all_btn)
@@ -515,63 +602,49 @@ class MainWindow:
         pre_btn_row.addWidget(self.pre_apply_btn)
         pre_layout.addLayout(pre_btn_row)
 
-        main_layout.addWidget(self.pre_group)
+        self.pre_empty_label = Q.QLabel("选择 INP/DAT 后点击“预分析”，这里会显示 Step、集合和简单单元连接信息。")
+        self.pre_empty_label.setAlignment(self.QtCore.Qt.AlignCenter)
+        self.pre_empty_label.setObjectName("emptyLabel")
+        preview_layout.addWidget(self.pre_empty_label, stretch=1)
+        preview_layout.addWidget(self.pre_group, stretch=1)
+        self.tabs.addTab(preview_tab, "3 预览")
 
-        # === 输出选项区 ===
-        out_group = Q.QGroupBox("⚙️ 输出选项")
+        # === Tab 4: output and run ===
+        run_tab = Q.QWidget()
+        run_layout = Q.QVBoxLayout(run_tab)
+        out_group = Q.QGroupBox("输出选项")
         out_layout = Q.QFormLayout(out_group)
+        out_layout.setLabelAlignment(self.QtCore.Qt.AlignRight)
+
+        self.format_combo = Q.QComboBox()
+        self.format_combo.addItems(["CSV (.csv)", "TSV (.csv, tab分隔)"])
+        out_layout.addRow("格式:", self.format_combo)
 
         self.enc_combo = Q.QComboBox()
         self.enc_combo.addItems(ENCODING_OPTIONS)
         out_layout.addRow("编码:", self.enc_combo)
 
+        self.decimal_spin = Q.QSpinBox()
+        self.decimal_spin.setRange(0, 12)
+        self.decimal_spin.setValue(6)
+        out_layout.addRow("小数位:", self.decimal_spin)
+
         self.meta_cb = Q.QCheckBox("包含元数据头部")
         self.meta_cb.setChecked(True)
         self.coord_cb = Q.QCheckBox("附带节点坐标列")
         self.coord_cb.setChecked(True)
+        self.merge_cb = Q.QCheckBox("合并到一个文件")
+        self.merge_cb.setChecked(False)
         opt_h_layout = Q.QHBoxLayout()
         opt_h_layout.addWidget(self.meta_cb)
         opt_h_layout.addWidget(self.coord_cb)
+        opt_h_layout.addWidget(self.merge_cb)
         opt_h_layout.addStretch()
         out_layout.addRow("", opt_h_layout)
 
-        main_layout.addWidget(out_group)
+        run_layout.addWidget(out_group)
 
-        # === 控制按钮 ===
-        btn_layout = Q.QHBoxLayout()
-
-        self.pre_btn = Q.QPushButton("🔍 预分析")
-        self.pre_btn.setMinimumHeight(40)
-        self.pre_btn.setStyleSheet(
-            "QPushButton { background-color: #2196F3; color: white; "
-            "font-size: 13px; font-weight: bold; border-radius: 4px; }"
-            "QPushButton:hover { background-color: #1976D2; }"
-            "QPushButton:disabled { background-color: #999; }"
-        )
-        self.pre_btn.clicked.connect(self._start_pre_analysis)
-
-        self.run_btn = Q.QPushButton("▶  开始提取")
-        self.run_btn.setMinimumHeight(40)
-        self.run_btn.setStyleSheet(
-            "QPushButton { background-color: #4CAF50; color: white; "
-            "font-size: 14px; font-weight: bold; border-radius: 4px; }"
-            "QPushButton:hover { background-color: #45a049; }"
-            "QPushButton:disabled { background-color: #999; }"
-        )
-        self.run_btn.clicked.connect(self._start_extraction)
-
-        self.cancel_btn = Q.QPushButton("取消")
-        self.cancel_btn.setMinimumHeight(40)
-        self.cancel_btn.setEnabled(False)
-        self.cancel_btn.clicked.connect(self._cancel_extraction)
-
-        btn_layout.addWidget(self.pre_btn)
-        btn_layout.addWidget(self.run_btn)
-        btn_layout.addWidget(self.cancel_btn)
-        main_layout.addLayout(btn_layout)
-
-        # === 进度 + 日志区 ===
-        log_group = Q.QGroupBox("📋 日志")
+        log_group = Q.QGroupBox("运行状态")
         log_layout = Q.QVBoxLayout(log_group)
 
         self.progress = Q.QProgressBar()
@@ -580,16 +653,95 @@ class MainWindow:
         self.progress.setTextVisible(True)
         log_layout.addWidget(self.progress)
 
-        self.status_label = Q.QLabel("就绪 — 选择 INP 和 DAT 文件后点击「开始提取」")
+        self.status_label = Q.QLabel("就绪：选择 INP 和 DAT 文件后，可以先预分析，也可以直接开始提取。")
         log_layout.addWidget(self.status_label)
 
         self.log_text = Q.QTextEdit()
         self.log_text.setReadOnly(True)
-        self.log_text.setMaximumHeight(180)
         self.log_text.setFont(self.QtGui.QFont("Consolas", 9))
         log_layout.addWidget(self.log_text)
 
-        main_layout.addWidget(log_group)
+        run_layout.addWidget(log_group, stretch=1)
+        self.tabs.addTab(run_tab, "4 输出与运行")
+
+        self.window.setStyleSheet("""
+            QWidget {
+                font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+                font-size: 10pt;
+            }
+            QFrame#header {
+                background: #f4f7fb;
+                border: 1px solid #d8e0ea;
+                border-radius: 8px;
+            }
+            QLabel#titleLabel {
+                font-size: 18pt;
+                font-weight: 700;
+                color: #172033;
+            }
+            QLabel#subtitleLabel, QLabel#tipLabel, QLabel#hintLabel {
+                color: #526070;
+            }
+            QLabel#summaryLabel {
+                background: #f7fafc;
+                border: 1px solid #d8e0ea;
+                border-radius: 6px;
+                padding: 8px;
+            }
+            QLabel#emptyLabel {
+                color: #6b7280;
+                font-size: 11pt;
+            }
+            QGroupBox {
+                font-weight: 700;
+                border: 1px solid #d8e0ea;
+                border-radius: 8px;
+                margin-top: 10px;
+                padding-top: 14px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 12px;
+                padding: 0 4px;
+            }
+            QLineEdit, QComboBox, QSpinBox, QTextEdit {
+                border: 1px solid #c9d3df;
+                border-radius: 6px;
+                padding: 6px;
+                background: white;
+            }
+            QPushButton {
+                border: 1px solid #b8c4d0;
+                border-radius: 6px;
+                padding: 7px 12px;
+                background: #ffffff;
+            }
+            QPushButton:hover {
+                background: #f0f5fa;
+            }
+            QPushButton:disabled {
+                color: #8a96a3;
+                background: #eef1f5;
+            }
+            QPushButton#primaryButton {
+                background: #1f7a4d;
+                border-color: #1f7a4d;
+                color: white;
+                font-weight: 700;
+            }
+            QPushButton#primaryButton:hover {
+                background: #19683f;
+            }
+            QPushButton#secondaryButton {
+                background: #246b9e;
+                border-color: #246b9e;
+                color: white;
+                font-weight: 700;
+            }
+            QPushButton#secondaryButton:hover {
+                background: #1f5b86;
+            }
+        """)
 
         w.setLayout(main_layout)
 
@@ -608,13 +760,44 @@ class MainWindow:
         if path:
             target.setText(path)
 
+    def _apply_variable_preset(self, target_vars: set[str]):
+        """Apply a quick variable preset to the variable checkboxes."""
+        for _label, (cb, _cat, vars_list) in self.var_checkboxes.items():
+            cb.setChecked(bool(set(vars_list) & target_vars))
+
+    def _default_output_dir(self, inp_file: str, dat_file: str = "") -> str:
+        """Build a friendly default output directory beside the INP file."""
+        base_file = inp_file or dat_file
+        if not base_file:
+            return os.path.abspath("./output")
+        path = Path(base_file)
+        parent = path.parent if str(path.parent) else Path(".")
+        return str(parent / f"{path.stem}_adb_output")
+
+    def _open_output_dir(self):
+        """Open the latest output directory in the system file manager."""
+        path = self._last_output_dir or self.out_edit.text().strip()
+        if not path:
+            path = self._default_output_dir(
+                self.inp_edit.text().strip(),
+                self.dat_edit.text().strip(),
+            )
+        if not os.path.isdir(path):
+            self._log(f"输出目录不存在: {path}", error=True)
+            return
+        url = self.QtCore.QUrl.fromLocalFile(os.path.abspath(path))
+        self.QtGui.QDesktopServices.openUrl(url)
+
     # ---- 提取逻辑 ----
     def _build_config(self) -> ExtractionConfig | None:
         """从 GUI 控件构建 ExtractionConfig."""
         config = ExtractionConfig()
         config.inp_file = self.inp_edit.text().strip()
         config.dat_file = self.dat_edit.text().strip()
-        config.output_dir = self.out_edit.text().strip() or "./output"
+        config.output_dir = (
+            self.out_edit.text().strip()
+            or self._default_output_dir(config.inp_file, config.dat_file)
+        )
 
         if not config.inp_file:
             self._log("❌ 请选择 INP 文件", error=True)
@@ -647,6 +830,11 @@ class MainWindow:
             config.filters.element_sets = [
                 s.strip() for s in elsets_text.split(",") if s.strip()
             ]
+        steps_text = self.steps_edit.text().strip()
+        if steps_text:
+            config.filters.steps = [
+                s.strip() for s in steps_text.split(",") if s.strip()
+            ]
 
         incr_idx = self.incr_combo.currentIndex()
         if incr_idx == 0:
@@ -666,8 +854,16 @@ class MainWindow:
         config.output.encoding = ENCODING_MAP.get(
             self.enc_combo.currentText(), "utf-8-sig"
         )
+        if self.format_combo.currentIndex() == 1:
+            config.output.format = "tsv"
+            config.output.delimiter = "\t"
+        else:
+            config.output.format = "csv"
+            config.output.delimiter = ","
         config.output.include_metadata = self.meta_cb.isChecked()
         config.output.include_node_coords = self.coord_cb.isChecked()
+        config.output.merge_sets = self.merge_cb.isChecked()
+        config.output.decimal_places = self.decimal_spin.value()
 
         return config
 
@@ -675,6 +871,10 @@ class MainWindow:
         config = self._build_config()
         if config is None:
             return
+        if not self.out_edit.text().strip():
+            self._auto_setting_out = True
+            self.out_edit.setText(config.output_dir)
+            self._auto_setting_out = False
 
         # 创建调试日志 (EXE 模式下自动启用)
         debug_log = create_debug_logger(
@@ -684,6 +884,7 @@ class MainWindow:
 
         self.run_btn.setEnabled(False)
         self.cancel_btn.setEnabled(True)
+        self.open_out_btn.setEnabled(False)
         self.progress.setValue(0)
         self.progress.setFormat("准备...")
         self.status_label.setText("正在提取...")
@@ -741,6 +942,8 @@ class MainWindow:
                 self.status_label.setText(
                     f"✅ 完成 — {s['exported_files']} 文件, {s['total_rows']} 行"
                 )
+                self._last_output_dir = self.out_edit.text().strip() or ""
+                self.open_out_btn.setEnabled(True)
                 self._log(f"✅ 提取成功!")
                 self._log(f"  节点: {s['node_count']}, 单元: {s['element_count']}")
                 self._log(f"  NSET: {s['nset_count']}, ELSET: {s['elset_count']}")
@@ -769,17 +972,17 @@ class MainWindow:
         if self._auto_setting_out:
             return
         if text and os.path.isfile(text) and not self._out_manually_set:
-            parent = os.path.dirname(text)
-            if parent and parent != self.out_edit.text():
+            default_dir = self._default_output_dir(text, self.dat_edit.text().strip())
+            if default_dir and default_dir != self.out_edit.text():
                 self._auto_setting_out = True
-                self.out_edit.setText(parent)
+                self.out_edit.setText(default_dir)
                 self._auto_setting_out = False
 
     def _on_out_changed(self, text: str):
         """用户手动修改输出目录时标记，防止被覆盖."""
         if self._auto_setting_out:
             return
-        if not self._out_manually_set and text and text != "./output":
+        if not self._out_manually_set and text:
             self._out_manually_set = True
 
     # ---- 预分析 ----
@@ -803,9 +1006,10 @@ class MainWindow:
 
         self.pre_btn.setEnabled(False)
         self.pre_group.setVisible(False)
+        self.pre_empty_label.setVisible(True)
         self.progress.setRange(0, 0)
-        self.progress.setFormat("Pre-analyzing...")
-        self.status_label.setText("Parsing INP + DAT...")
+        self.progress.setFormat("预分析中...")
+        self.status_label.setText("正在解析 INP + DAT...")
         self._log(f"🔍 预分析: {os.path.basename(inp_path)} + {os.path.basename(dat_path)}")
 
         self._pre_done_data = None
@@ -830,7 +1034,7 @@ class MainWindow:
             self.progress.setRange(0, 100)
             self.progress.setValue(0)
             self.progress.setFormat("")
-            self.status_label.setText("Pre-analysis complete")
+            self.status_label.setText("预分析完成")
 
             if self._pre_done_error:
                 self._log(f"预分析失败: {self._pre_done_error}", error=True)
@@ -846,6 +1050,7 @@ class MainWindow:
         self._clear_layout(self.pre_scroll_layout)
         self._nset_checkboxes.clear()
         self._elset_checkboxes.clear()
+        self._step_checkboxes.clear()
 
         # 摘要
         summary_parts = [
@@ -864,17 +1069,21 @@ class MainWindow:
 
         # 步骤信息
         if data.steps:
-            step_group = Q.QGroupBox("📊 Steps & Increments")
-            step_layout = Q.QVBoxLayout(step_group)
+            step_group = Q.QGroupBox("Steps & Increments")
+            step_layout = Q.QGridLayout(step_group)
             for sname, incs in data.steps.items():
                 stype = data.step_types.get(sname, "")
                 inc_str = ", ".join(str(i) for i in incs)
-                step_layout.addWidget(Q.QLabel(f"  {sname} ({stype}): Increments [{inc_str}]"))
+                cb = Q.QCheckBox(f"{sname} ({stype})  increments: {inc_str}")
+                cb.setChecked(True)
+                self._step_checkboxes[sname] = cb
+                row = len(self._step_checkboxes) - 1
+                step_layout.addWidget(cb, row, 0)
             self.pre_scroll_layout.addWidget(step_group)
 
         # 节点集
         if data.nsets:
-            nset_group = Q.QGroupBox(f"🔵 Node Sets ({len(data.nsets)})")
+            nset_group = Q.QGroupBox(f"Node Sets ({len(data.nsets)})")
             nset_layout = Q.QGridLayout(nset_group)
             nset_layout.setSpacing(2)
             sorted_nsets = sorted(data.nsets.items(), key=lambda x: x[0].lower())
@@ -887,7 +1096,7 @@ class MainWindow:
 
         # 单元集
         if data.elsets:
-            elset_group = Q.QGroupBox(f"🟢 Element Sets ({len(data.elsets)})")
+            elset_group = Q.QGroupBox(f"Element Sets ({len(data.elsets)})")
             elset_layout = Q.QGridLayout(elset_group)
             elset_layout.setSpacing(2)
             sorted_elsets = sorted(data.elsets.items(), key=lambda x: x[0].lower())
@@ -901,7 +1110,7 @@ class MainWindow:
         # 简单单元连接性
         if data.element_connectivity:
             conn_group = Q.QGroupBox(
-                f"🔗 Simple Element Connectivity (Spring/Truss/Beam) "
+                f"Simple Element Connectivity (Spring/Truss/Beam) "
                 f"({len(data.element_connectivity)} elements)"
             )
             conn_layout = Q.QGridLayout(conn_group)
@@ -936,7 +1145,9 @@ class MainWindow:
 
         self.pre_scroll_layout.addStretch()
 
+        self.pre_empty_label.setVisible(False)
         self.pre_group.setVisible(True)
+        self.tabs.setCurrentIndex(2)
         self._log(f"预分析完成: {data.node_count} nodes, {data.element_count} elements, "
                   f"{len(data.nsets)} nsets, {len(data.elsets)} elsets, {len(data.steps)} steps")
 
@@ -962,12 +1173,18 @@ class MainWindow:
 
     def _apply_sets_to_filters(self):
         """将选中的集合名称写入筛选输入框."""
+        checked_steps = [name for name, cb in self._step_checkboxes.items() if cb.isChecked()]
         checked_nsets = [name for name, cb in self._nset_checkboxes.items() if cb.isChecked()]
         checked_elsets = [name for name, cb in self._elset_checkboxes.items() if cb.isChecked()]
 
+        self.steps_edit.setText(", ".join(checked_steps))
         self.nsets_edit.setText(", ".join(checked_nsets))
         self.elsets_edit.setText(", ".join(checked_elsets))
-        self._log(f"已应用: {len(checked_nsets)} NSETs, {len(checked_elsets)} ELSETs 到筛选条件")
+        self.tabs.setCurrentIndex(1)
+        self._log(
+            f"已应用: {len(checked_steps)} Steps, "
+            f"{len(checked_nsets)} NSETs, {len(checked_elsets)} ELSETs 到筛选条件"
+        )
 
     def _reset_ui(self):
         self.run_btn.setEnabled(True)

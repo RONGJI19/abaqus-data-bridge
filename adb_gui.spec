@@ -65,19 +65,3 @@ exe = EXE(
     entitlements_file=None,
     icon=None,
 )
-
-# 也可以构建 CLI 版本 (带控制台)
-exe_cli = EXE(
-    pyz,
-    a.scripts,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    [],
-    name='ADB_CLI',
-    debug=False,
-    strip=False,
-    upx=True,
-    console=True,    # 显示控制台窗口
-    icon=None,
-)

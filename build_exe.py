@@ -44,9 +44,9 @@ def clean():
             shutil.rmtree(d)
 
 
-def build(target: str):
-    """Run PyInstaller."""
-    spec = PROJ_ROOT / "adb_gui.spec"
+def build_spec(spec_name: str):
+    """Run PyInstaller for one spec file."""
+    spec = PROJ_ROOT / spec_name
     if not spec.exists():
         print(f"[ERROR] Spec file not found: {spec}")
         sys.exit(1)
@@ -58,7 +58,7 @@ def build(target: str):
         "--distpath", str(DIST),
         "--workpath", str(BUILD),
     ]
-    print(f"  Running: pyinstaller adb_gui.spec --noconfirm")
+    print(f"  Running: pyinstaller {spec_name} --noconfirm")
     subprocess.check_call(cmd)
 
 
@@ -87,7 +87,13 @@ def main():
 
     # Build
     print("[3/4] Building...")
-    build("gui" if gui_only else "all")
+    if cli_only:
+        build_spec("adb_cli.spec")
+    elif gui_only:
+        build_spec("adb_gui.spec")
+    else:
+        build_spec("adb_gui.spec")
+        build_spec("adb_cli.spec")
 
     # Done
     print("[4/4] Done!")
