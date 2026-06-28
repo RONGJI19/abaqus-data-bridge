@@ -2,6 +2,27 @@
 
 All notable changes to Abaqus Data Bridge (ADB) are documented in this file.
 
+## [Unreleased] — 2026-06-28
+
+### 🔧 GUI Workflow Improvements
+- Reworked the desktop GUI into a clearer 4-step workflow: Files, Selection, Preview, Output & Run.
+- Added variable presets for nodal, element, contact, and spring result groups.
+- Added Step filtering to the GUI.
+- Enhanced pre-analysis so users can select Steps, NSETs, and ELSETs from parsed model data and apply them to extraction filters.
+- Added output controls for CSV/TSV, encoding, decimal places, metadata, node coordinates, and merged output.
+- Added automatic `<inp_stem>_adb_output` output directory generation.
+- Added an "open output directory" action after successful extraction.
+
+### 📦 Packaging
+- Split GUI and CLI PyInstaller specs into true independent entry points.
+- `python build_exe.py` now builds both `ADB_GUI.exe` and `ADB_CLI.exe`; `--gui` and `--cli` build only one target.
+- Renamed the CLI executable target to `ADB_CLI.exe`.
+- Disabled Windows `strip` for the CLI build to avoid noisy non-actionable packaging warnings.
+
+### 🧪 Verification
+- Full test suite: 66 passed.
+- Verified CLI EXE startup and sample extraction.
+
 ## [0.1.0] — 2026-06-28
 
 ### 🎉 Initial Release
@@ -98,7 +119,7 @@ All notable changes to Abaqus Data Bridge (ADB) are documented in this file.
 - Contribution guide (`CONTRIBUTING.md`)
 
 #### Test Suite
-- 49 passing tests across 6 test files
+- 66 passing tests across 6 test files
 - Test fixtures: truss, spring, contact, beam models
 - Unit tests: parsers, utilities, models
 - Integration tests: full pipeline

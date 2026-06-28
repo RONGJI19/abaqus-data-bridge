@@ -257,6 +257,26 @@ Writes diagnostic logs with immediate flush to survive crashes during extraction
 
 Unified progress bar interface with optional `tqdm` support.
 
+### 4.6 `adb/gui.py` — Desktop GUI
+
+The GUI is a PySide6 front end over the same parser, matcher, and exporter pipeline used by the CLI.
+
+**Workflow**:
+1. **Files**: select or drag-drop `.inp` / `.dat`, with automatic output directory generation.
+2. **Selection**: choose variable presets, Step filters, NSET/ELSET filters, and Increment mode.
+3. **Preview**: run pre-analysis to inspect model metadata, Steps/Increments, NSETs, ELSETs, and simple two-node element connectivity.
+4. **Output & Run**: configure CSV/TSV, encoding, decimal places, metadata, node coordinates, merged output, progress, and logs.
+
+**Threading model**:
+- `PreAnalysisThread` parses INP/DAT in the background and returns a lightweight `PreAnalysisData` snapshot.
+- `ExtractionThread` runs parse → match → export in the background so the UI remains responsive.
+- The main Qt thread polls thread-owned status fields via `QTimer`, avoiding direct widget updates from worker threads.
+
+**Packaging**:
+- `adb_gui.spec` builds `ADB_GUI.exe` from `adb/gui.py`.
+- `adb_cli.spec` builds `ADB_CLI.exe` from `run_cli.py`.
+- `build_exe.py` orchestrates one or both targets.
+
 ---
 
 ## 5. Data Flow
@@ -483,7 +503,9 @@ D:\Project5_Abaqus\
 │   ├── test.yml            # Multi-OS, multi-Python test matrix
 │   └── publish.yml         # PyPI publish on release
 ├── pyproject.toml          # Package metadata & build config
-├── build_exe.py            # PyInstaller EXE builder
+├── adb_gui.spec            # PyInstaller GUI spec → ADB_GUI.exe
+├── adb_cli.spec            # PyInstaller CLI spec → ADB_CLI.exe
+├── build_exe.py            # PyInstaller EXE builder/orchestrator
 ├── build_exe.bat           # Windows build script
 ├── run_cli.py              # Dev launcher
 ├── README.md               # Project README

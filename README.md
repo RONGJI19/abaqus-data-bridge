@@ -7,7 +7,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.1.0-orange)]()
-[![Tests](https://img.shields.io/badge/tests-49%20passed-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-66%20passed-brightgreen)]()
 
 ## ✨ 为什么选择 ADB？ / Why ADB?
 
@@ -129,6 +129,13 @@ pip install abaqus-data-bridge[gui]
 adb-gui
 ```
 
+GUI 面向非脚本用户优化为 4 步流程：
+
+1. **文件**：拖放或选择 `.inp` / `.dat`，自动生成输出目录
+2. **选择**：一键选择节点/单元/接触/弹簧变量，填写 Step、NSET、ELSET、Increment
+3. **预览**：预分析模型，勾选 Step、节点集、单元集并一键应用到筛选条件
+4. **输出与运行**：选择 CSV/TSV、编码、小数位、是否合并输出，运行后可直接打开输出目录
+
 ![GUI](docs/gui_screenshot.png)
 
 或命令行版本 / Or CLI: `adb extract -i model.inp -d results.dat -o ./output`
@@ -143,6 +150,10 @@ pip install pyinstaller pyside6
 
 # 2. 执行打包（Windows）
 build_exe.bat
+# 或
+python build_exe.py          # 同时构建 GUI + CLI
+python build_exe.py --gui    # 只构建 GUI
+python build_exe.py --cli    # 只构建 CLI
 
 # 3. 输出在 dist/ 目录
 #    dist/ADB_GUI.exe  — 双击运行，无需 Python
@@ -152,7 +163,7 @@ build_exe.bat
 pyinstaller adb_gui.spec
 ```
 
-打包后的 `dist/` 文件夹可以直接拷贝给同事，无需安装 Python 或任何依赖。
+打包后的 `dist/` 文件夹可以直接拷贝给同事，无需安装 Python 或任何依赖。GUI 和 CLI 使用独立 PyInstaller 入口构建，避免命令行版误加载 GUI 依赖。
 
 ## 🔧 依赖 / Dependencies
 

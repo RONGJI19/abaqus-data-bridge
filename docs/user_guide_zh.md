@@ -123,9 +123,51 @@ adb extract -i model.inp -d results.dat --increments "1,5,10"
 
 ---
 
-## 4. CLI 命令参考
+## 4. GUI 桌面版
 
-### 4.1 `adb extract` — 主提取命令
+GUI 适合不想写命令的工程师使用，尤其适合交给其他电脑直接运行 EXE。
+
+### 4.1 启动 GUI
+
+```bash
+adb-gui
+```
+
+如果使用打包版，双击 `dist/ADB_GUI.exe` 即可。
+
+### 4.2 推荐流程
+
+1. **文件**  
+   拖放或选择 `.inp` 和 `.dat` 文件。输出目录可留空，程序会自动生成 `<inp文件名>_adb_output`。
+
+2. **预分析**  
+   点击“预分析”，程序会先解析 INP/DAT，显示模型摘要、Step/Increment、NSET、ELSET 和简单单元连接信息。
+
+3. **选择范围**  
+   在预览页勾选需要的 Step、节点集、单元集，点击“应用选中范围”。也可以在“选择”页手动填写 Step、节点集、单元集和 Increment。
+
+4. **选择变量**  
+   可使用“节点结果 / 单元结果 / 接触结果 / 弹簧结果”快捷按钮，也可以逐个勾选变量。不勾选任何变量表示提取全部可识别变量。
+
+5. **输出与运行**  
+   选择 CSV/TSV、编码、小数位、是否包含元数据、是否附带节点坐标、是否合并到一个文件。点击“开始提取”后，完成时可直接打开输出目录。
+
+### 4.3 GUI 输出选项
+
+| 选项 | 说明 |
+|------|------|
+| 格式 | CSV 或 TSV（文件扩展名仍为 `.csv`，TSV 使用 Tab 分隔） |
+| 编码 | 默认 `utf-8-sig`，便于 Excel 正确打开中文 |
+| 小数位 | 控制浮点数导出精度 |
+| 包含元数据头部 | 在 CSV 前几行写入版本、Job、行数和提取时间 |
+| 附带节点坐标列 | 节点/接触输出中附加 X/Y/Z |
+| 合并到一个文件 | 将所有结果组写入单个文件 |
+
+---
+
+## 5. CLI 命令参考
+
+### 5.1 `adb extract` — 主提取命令
 
 ```
 Usage: adb extract [OPTIONS]
@@ -150,7 +192,7 @@ Options:
   --help                   显示帮助信息
 ```
 
-### 4.2 `adb inspect` — 查看 DAT 文件内容
+### 5.2 `adb inspect` — 查看 DAT 文件内容
 
 ```bash
 adb inspect results.dat
@@ -174,7 +216,7 @@ CPU Time: 0.28s, Wall Time: 2.0s
   ...
 ```
 
-### 4.3 `adb list-sets` — 列出 INP 中的 Set
+### 5.3 `adb list-sets` — 列出 INP 中的 Set
 
 ```bash
 # 列出所有 Set
@@ -187,7 +229,7 @@ adb list-sets model.inp --type nset
 adb list-sets model.inp --type elset
 ```
 
-### 4.4 `adb wizard` — 交互式向导
+### 5.4 `adb wizard` — 交互式向导
 
 ```bash
 adb wizard
@@ -197,11 +239,11 @@ adb wizard
 
 ---
 
-## 5. 配置文件 (YAML)
+## 6. 配置文件 (YAML)
 
 对于复杂的提取需求，建议使用配置文件模式。
 
-### 5.1 完整配置文件
+### 6.1 完整配置文件
 
 ```yaml
 # config.yaml
@@ -244,7 +286,7 @@ extraction:
     log_level: "INFO"
 ```
 
-### 5.2 使用配置文件
+### 6.2 使用配置文件
 
 ```bash
 adb extract -c config.yaml
@@ -256,7 +298,7 @@ adb extract -c config.yaml
 adb extract -c config.yaml --nsets "TOP_NODES" --increments "1,5,10"
 ```
 
-### 5.3 生成配置模板
+### 6.3 生成配置模板
 
 ```bash
 # 模板文件位于安装包的 templates/ 目录
@@ -265,9 +307,9 @@ cp $(python -c "import adb; print(adb.__path__[0])")/templates/config_template.y
 
 ---
 
-## 6. CSV 输出格式
+## 7. CSV 输出格式
 
-### 6.1 文件命名规则
+### 7.1 文件命名规则
 
 ```
 {Step}_{Incr}_{SetName}_{VariableType}.csv
@@ -281,7 +323,7 @@ Step-1_incr1_TOP_BOTTOM_SURF-BOTTOM_TOP_SURF_MASTER_CNORMF.csv
 Step-2_incr5_SPRING_SET_S.csv
 ```
 
-### 6.2 文件内容格式
+### 7.2 文件内容格式
 
 ```csv
 # Abaqus Data Bridge v0.1.0
@@ -298,7 +340,7 @@ ENTITY_ID,X,Y,Z,U1,U2,U3,RF1,RF2
 - `X, Y, Z` 是节点坐标 (可通过配置文件关闭)
 - 后续列为提取的结果变量
 
-### 6.3 编码选择
+### 7.3 编码选择
 
 | 编码 | 场景 |
 |------|------|
@@ -308,9 +350,9 @@ ENTITY_ID,X,Y,Z,U1,U2,U3,RF1,RF2
 
 ---
 
-## 7. 常见场景示例
+## 8. 常见场景示例
 
-### 7.1 提取螺栓连接节点的位移
+### 8.1 提取螺栓连接节点的位移
 
 ```bash
 adb extract \
@@ -322,7 +364,7 @@ adb extract \
     -o ./bolt_displacement
 ```
 
-### 7.2 提取弹簧单元内力并附带坐标
+### 8.2 提取弹簧单元内力并附带坐标
 
 配置文件方式：
 ```yaml
@@ -333,7 +375,7 @@ extraction:
     include_node_coords: true
 ```
 
-### 7.3 提取接触面结果 (力+压力+开度)
+### 8.3 提取接触面结果 (力+压力+开度)
 
 ```bash
 adb extract \
@@ -352,7 +394,7 @@ contact_results/
 └── ...
 ```
 
-### 7.4 批量处理多个 Job
+### 8.4 批量处理多个 Job
 
 ```bash
 # 创建批量脚本
@@ -378,7 +420,7 @@ for job in jobs:
     print(f"{job}: {stats['total_rows']} rows exported")
 ```
 
-### 7.5 合并所有结果到一个文件
+### 8.5 合并所有结果到一个文件
 
 ```bash
 adb extract -i model.inp -d results.dat --merge -o ./single_file
@@ -386,11 +428,11 @@ adb extract -i model.inp -d results.dat --merge -o ./single_file
 
 ---
 
-## 8. Abaqus 输出设置指南
+## 9. Abaqus 输出设置指南
 
 为了确保 ADB 能够提取到你需要的结果，INP 文件中需要包含相应的 `*PRINT` 请求：
 
-### 8.1 节点输出
+### 9.1 节点输出
 
 ```abaqus
 *STEP
@@ -403,7 +445,7 @@ V,      # 速度 (可选)
 A       # 加速度 (可选)
 ```
 
-### 8.2 单元输出
+### 9.2 单元输出
 
 ```abaqus
 *EL PRINT, ELSET=YOUR_ELSET
@@ -413,7 +455,7 @@ SF,     # 截面力
 SM      # 截面弯矩
 ```
 
-### 8.3 接触输出
+### 9.3 接触输出
 
 ```abaqus
 *CONTACT PRINT, MASTER=MASTER_SURF, SLAVE=SLAVE_SURF
@@ -422,7 +464,7 @@ CSTRESS,  # 接触应力 (CPRESS, CSHEAR)
 CDISP     # 接触位移 (COPEN, CSLIP)
 ```
 
-### 8.4 弹簧输出
+### 9.4 弹簧输出
 
 弹簧单元使用标准的 `*EL PRINT`：
 ```abaqus
@@ -433,9 +475,9 @@ E       # E11 = 相对位移 (mm)
 
 ---
 
-## 9. 故障排除
+## 10. 故障排除
 
-### 9.1 编码问题
+### 10.1 编码问题
 
 **症状**: 中文注释显示乱码，或解析报 `UnicodeDecodeError`
 
@@ -448,7 +490,7 @@ adb extract -i model.inp -d results.dat --encoding gbk
 pip install chardet
 ```
 
-### 9.2 DAT 文件解析不完整
+### 10.2 DAT 文件解析不完整
 
 **症状**: `inspect` 显示表格数少于预期
 
@@ -460,7 +502,7 @@ pip install chardet
 - 检查 DAT 文件末尾是否有 `THE ANALYSIS HAS BEEN COMPLETED`
 - 确认 INP 中有相应的 `*NODE PRINT` / `*EL PRINT` / `*CONTACT PRINT`
 
-### 9.3 大文件内存不足
+### 10.3 大文件内存不足
 
 **症状**: `MemoryError` 或系统卡顿
 
@@ -469,7 +511,7 @@ pip install chardet
 - 如果模型 > 100万节点，可以使用 `--merge` 减少导出文件数
 - 在配置文件中设置 `advanced.memory_limit_mb` 以启用内存监控
 
-### 9.4 找不到 Set
+### 10.4 找不到 Set
 
 **症状**: `list-sets` 显示的 Set 与你预期的不符
 
@@ -481,9 +523,9 @@ pip install chardet
 
 ---
 
-## 10. 技术参考
+## 11. 技术参考
 
-### 10.1 Abaqus 文件类型
+### 11.1 Abaqus 文件类型
 
 | 文件 | 扩展名 | 格式 | 需要许可证? |
 |------|--------|------|-------------|
@@ -494,7 +536,7 @@ pip install chardet
 | 消息文件 | `.msg` | 纯文本 | 否 |
 | 状态文件 | `.sta` | 纯文本 | 否 |
 
-### 10.2 Fortran 数值格式
+### 11.2 Fortran 数值格式
 
 DAT 文件使用 Fortran 科学记数法：
 - `1.234E+02` = 123.4
@@ -502,7 +544,7 @@ DAT 文件使用 Fortran 科学记数法：
 - `-1.234-02` = -0.01234 (省略 E)
 - `**********` = 数值溢出/未定义 (ADB 转为 NaN)
 
-### 10.3 版本兼容性
+### 11.3 版本兼容性
 
 ADB 目前测试过的 Abaqus 版本：
 - Abaqus 6.24 (测试环境)
@@ -512,5 +554,5 @@ ADB 目前测试过的 Abaqus 版本：
 
 ---
 
-> **文档版本**: v0.1.0  
-> **最后更新**: 2026-06-25
+> **文档版本**: v0.1.1  
+> **最后更新**: 2026-06-28
